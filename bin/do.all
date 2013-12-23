@@ -14,7 +14,7 @@ txtrst=$(tput sgr0)             #  reset
 
 function  rm_dir
 {
-	bdir="$bs/$p/debug"
+	bdir="$bs/$p/$btype"
 	echo "${bldyel}removing $bdir${txtrst}" 
 	rm -rf $bdir
 }
@@ -31,12 +31,13 @@ function  check_dir
 	fi
 }
 
-function gitpull_pkg
+function git_pkg
 {
 	pkg=$1
 	sdir="$ws/$pkg"
 	cd $sdir
-	git pull
+	git $gitaction_
+	cd $bdir
 }
 
 function configure_pkg  
@@ -51,6 +52,11 @@ function make_pkg
 	make -j10
 }
 
+function make_test
+{
+	make test
+}
+
 function make_install_pkg 
 {
 	make install
@@ -59,7 +65,9 @@ function make_install_pkg
 ###############################################################################
 
 if [ ! "$1" ] ; then
-    echo "Usage: $0 < -c | -m | -i | -d | -r >";
+    echo "Usage: $0 < -b [btype] | -g [cmd] | -r | -c | -m | -i | -d >";
+    echo "   -b   define build type, default 'debug'";    	
+    echo "   -g   git action on src dir";    	
     echo "   -r   remove build dir";    	
     echo "   -c   configure with cmake";    	
     echo "   -m   make";    	
@@ -70,6 +78,7 @@ fi
 
 ws=$HOME/dev
 bs=$HOME/builds
+btype=debug
 
 packages="ecbuild grib_api libemos eckit odb_api fdb mir mars.client mars.server magics mining build.all" 
 
@@ -78,16 +87,21 @@ gitp_='no'
 check_='no'
 conf_='no'
 make_='no'
+test_='no'
 inst_='no'
 
-while getopts :rgcmid opt
+while getopts :rb:g:cmidt opt
 do
 	case $opt in
 		'r')
 			rm_='yes'
 			;;
+		'b')
+			btype="$OPTARG"
+			;;
 		'g')
 			gitp_='yes'
+			gitaction_="$OPTARG"
 			;;
 		'd')
 			check_='yes'
@@ -97,6 +111,9 @@ do
 			;;
 		'm')  
 			make_='yes'
+			;;
+		't')
+			test_='yes'
 			;;
 		'i')
 			inst_='yes'
@@ -109,21 +126,25 @@ do
 	echo -e "${bldblu} ---> package $p ${txtrst}"
 	
 	cd $bs
-	bdir="$bs/$p/debug"
-	
+
+	sdir="$ws/$p"
+	bdir="$bs/$p/$btype"
+
 	[[ 	$rm_ == 'yes' ]] && rm_dir $p
 
 	[ ! -d $bdir ] && mkdir -p $bdir
 	
 	cd $bdir
 
-	[[ 	$gitp_ == 'yes' ]] && gitpull_pkg $p
+	[[ 	$gitp_ == 'yes' ]] && git_pkg $p
 
 	[[ 	$check_ == 'yes' ]] && check_dir $p
 
 	[[ 	$conf_ == 'yes' ]] && configure_pkg $p
 
 	[[ 	$make_ == 'yes' ]] && make_pkg $p
+
+	[[ 	$test_ == 'yes' ]] && make_test $p
 
 	[[ 	$inst_ == 'yes' ]] && make_install_pkg $p
 
