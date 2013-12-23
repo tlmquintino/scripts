@@ -1,0 +1,130 @@
+#!/usr/bin/env bash
+
+set -e
+
+###############################################################################
+
+txtbld=$(tput bold)             #  bold
+bldblu=${txtbld}$(tput setaf 6) #  bold cyan
+bldred=${txtbld}$(tput setaf 1) #  bold red
+bldyel=${txtbld}$(tput setaf 3) #  bold yellow
+txtrst=$(tput sgr0)             #  reset
+
+###############################################################################
+
+function  rm_dir
+{
+	bdir="$bs/$p/debug"
+	echo "${bldyel}removing $bdir${txtrst}" 
+	rm -rf $bdir
+}
+
+function  check_dir
+{
+	pkg=$1
+	sdir="$ws/$pkg"
+	if [ ! -d $sdir ]
+	then
+		echo -e "${bldred}source dir not found -- $sdir${txtrst}"
+	else
+		echo -e "$sdir"
+	fi
+}
+
+function gitpull_pkg
+{
+	pkg=$1
+	sdir="$ws/$pkg"
+	cd $sdir
+	git pull
+}
+
+function configure_pkg  
+{
+	pkg=$1
+	sdir="$ws/$pkg"
+	$bs/configure
+}
+
+function make_pkg 
+{
+	make -j10
+}
+
+function make_install_pkg 
+{
+	make install
+}
+
+###############################################################################
+
+if [ ! "$1" ] ; then
+    echo "Usage: $0 < -c | -m | -i | -d | -r >";
+    echo "   -r   remove build dir";    	
+    echo "   -c   configure with cmake";    	
+    echo "   -m   make";    	
+    echo "   -i   make install";    	
+    echo "   -d   print dir";    	
+    exit
+fi
+
+ws=$HOME/dev
+bs=$HOME/builds
+
+packages="ecbuild grib_api libemos eckit odb_api fdb mir mars.client mars.server magics mining build.all" 
+
+rm_='no'
+gitp_='no'
+check_='no'
+conf_='no'
+make_='no'
+inst_='no'
+
+while getopts :rgcmid opt
+do
+	case $opt in
+		'r')
+			rm_='yes'
+			;;
+		'g')
+			gitp_='yes'
+			;;
+		'd')
+			check_='yes'
+			;;
+		'c')
+			conf_='yes'
+			;;
+		'm')  
+			make_='yes'
+			;;
+		'i')
+			inst_='yes'
+			;;
+	esac
+done
+
+for p in $packages
+do
+	echo -e "${bldblu} ---> package $p ${txtrst}"
+	
+	cd $bs
+	bdir="$bs/$p/debug"
+	
+	[[ 	$rm_ == 'yes' ]] && rm_dir $p
+
+	[ ! -d $bdir ] && mkdir -p $bdir
+	
+	cd $bdir
+
+	[[ 	$gitp_ == 'yes' ]] && gitpull_pkg $p
+
+	[[ 	$check_ == 'yes' ]] && check_dir $p
+
+	[[ 	$conf_ == 'yes' ]] && configure_pkg $p
+
+	[[ 	$make_ == 'yes' ]] && make_pkg $p
+
+	[[ 	$inst_ == 'yes' ]] && make_install_pkg $p
+
+done	
