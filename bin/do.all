@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+#!/bin/bash
 
 set -e
 
@@ -64,15 +64,18 @@ function make_install_pkg
 
 ###############################################################################
 
+optdef=":b:rg:cmidt"
+
 if [ ! "$1" ] ; then
-    echo "Usage: $0 < -b [btype] | -g [cmd] | -r | -c | -m | -i | -d >";
+    echo "Usage: $0 < -b [btype] | -r | -g [cmd] | -c | -m | -i | -d | -t >";
     echo "   -b   define build type, default 'debug'";    	
-    echo "   -g   git action on src dir";    	
     echo "   -r   remove build dir";    	
+    echo "   -g   git action on src dir";    	
     echo "   -c   configure with cmake";    	
     echo "   -m   make";    	
     echo "   -i   make install";    	
     echo "   -d   print dir";    	
+    echo "   -t   make test";    	
     exit
 fi
 
@@ -80,7 +83,7 @@ ws=$HOME/dev
 bs=$HOME/builds
 btype=debug
 
-packages="ecbuild grib_api libemos eckit odb_api fdb mir mars.client mars.server magics mining build.all" 
+packages="ecbuild eckit odb_api fdb mars.server" # grib_api libemos mir mars.client magics mining build.all
 
 rm_='no'
 gitp_='no'
@@ -90,7 +93,7 @@ make_='no'
 test_='no'
 inst_='no'
 
-while getopts :rb:g:cmidt opt
+while getopts $optdef opt
 do
 	case $opt in
 		'r')
