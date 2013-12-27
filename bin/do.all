@@ -83,7 +83,7 @@ ws=$HOME/dev
 bs=$HOME/builds
 btype=debug
 
-packages="ecbuild eckit odb_api fdb mars.server" # grib_api libemos mir mars.client magics mining build.all
+packages="ecbuild grib_api libemos  eckit odb_api fdb mir mars.client mars.server magics mining build.all"
 
 rm_='no'
 gitp_='no'
